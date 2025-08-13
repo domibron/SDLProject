@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+!SDL2.dll
+!/SDL2-2.24.0
