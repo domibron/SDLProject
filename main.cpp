@@ -3,39 +3,65 @@
 
 using namespace std;
 
+SDL_Window* g_sdlWindow;
+SDL_Renderer* g_sdlRenderer;
+
+SDL_Texture* LoadTexture(const char* filename) {
+	SDL_Surface* image = SDL_LoadBMP(filename);
+	if (image == nullptr) {
+		cout << "Failed to load " << filename << ". SDL error: " << SDL_GetError() << endl;
+	}
+
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(g_sdlRenderer, image);
+	if (texture == nullptr) {
+		cout << "Failed to create texture from surface. SDL error: " << SDL_GetError() << endl;
+	}
+
+	SDL_FreeSurface(image);
+
+	return texture;
+}
+
 int main(int argc, char* argv[]) {
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		cout << "Failed to initialise SDL. SDL error: " << SDL_GetError() << endl;
 	}
 
-	SDL_Window* sdlWindow = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, NULL);
+	g_sdlWindow = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, NULL);
 
-	if (sdlWindow == nullptr) {
+	if (g_sdlWindow == nullptr) {
 		cout << "Failed to create window. SDL error: " << SDL_GetError() << endl;
 	}
 
-	SDL_Surface* image = SDL_LoadBMP("door.bmp");
-	if (image == nullptr) {
-		cout << "Failed to load door.bmp. SDL error: " << SDL_GetError() << endl;
+	g_sdlRenderer = SDL_CreateRenderer(g_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
+	if (g_sdlRenderer == nullptr) {
+		cout << "Failed to create renderer. SDL error: " << SDL_GetError() << endl;
 	}
 
-	SDL_Surface* windowSurface = SDL_GetWindowSurface(sdlWindow);
-	if (windowSurface == nullptr) {
-		cout << "Failed to get window surface. SDL error: " << SDL_GetError() << endl;
+	SDL_Texture* doorTexture = LoadTexture("door.bmp");
+	for (int frameCount = 0; frameCount < 850; frameCount++) {
+
+		SDL_SetRenderDrawColor(g_sdlRenderer, 255, 0, 0, 255);
+		SDL_RenderClear(g_sdlRenderer);
+
+		SDL_Rect destinationRect { frameCount,25,16,16 };
+
+		SDL_RenderCopy(g_sdlRenderer, doorTexture, NULL, &destinationRect);
+
+		SDL_RenderPresent(g_sdlRenderer);
+
+		SDL_Delay(16);
 	}
 
-	SDL_Rect destinationRect{ 25, 25, 16, 16 };
-	SDL_BlitSurface(image, NULL, windowSurface, &destinationRect);
-
-
-	SDL_UpdateWindowSurface(sdlWindow);
 
 	// pauses console.
 	getchar();
 
-	SDL_FreeSurface(image);
-	SDL_DestroyWindow(sdlWindow);
+	SDL_DestroyTexture(doorTexture);
+
+	SDL_DestroyRenderer(g_sdlRenderer);
+	SDL_DestroyWindow(g_sdlWindow);
 	SDL_Quit();
 
 	return 0;
